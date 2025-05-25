@@ -2,15 +2,29 @@ import LikeButton from './LikeButton'
 import './TrailCard.css'
 import { useEffect, useState } from 'react'
 
-type CardProps = {
-  title: string
-  children?: React.ReactNode,
+type trailData = {
+  id: string,
+  fullName: string,
+  description: string,
+  directionsInfo: string,
+  imagePath: string | null,
 }
 
-const Card: React.FC<CardProps> = (props: CardProps) => {
+type CardProps = {
+  data: trailData,
+  onLiked: (liked: boolean, data: trailData) => void
+}
+
+const Card: React.FC<CardProps> = ({ data, onLiked }) => {
 
   const [isExpanded, setIsExpanded] = useState(false);
   const [liked, setLiked] = useState(false);
+
+  function handleLiked() {
+    const newLiked = !liked;
+    setLiked(newLiked);
+    onLiked(newLiked, data);
+  }
 
   useEffect(() => {
   }, [liked]); // only runs when `liked` changes
@@ -18,13 +32,15 @@ const Card: React.FC<CardProps> = (props: CardProps) => {
   return (
     <div>
       <div className='card' onClick={() => {
-        setIsExpanded((prevIsExpanded) => !prevIsExpanded);
+        setIsExpanded(!isExpanded);
       }}>
-        <h5>{props.title} <LikeButton liked={liked} setLiked={setLiked} /> </h5>
+        <h5>{data.fullName} <LikeButton liked={liked} onLiked={handleLiked} /> </h5>
 
         {isExpanded &&
           (<>
-            {props.children}
+            <p> {data.description}</p>
+            {data.imagePath && (<img src={data.imagePath} alt="" />)}
+            <p> Directions: {data.directionsInfo}</p>
           </>
           )
         }

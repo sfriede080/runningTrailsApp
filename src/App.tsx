@@ -1,14 +1,54 @@
 import './App.css'
 import Card from './components/TrailCard'
 import SearchBar from './components/SearchBar'
-import { useEffect, useState } from 'react'
+import { useEffect, useReducer, useState } from 'react'
+
+type trailData = {
+  id: string,
+  fullName: string,
+  description: string,
+  directionsInfo: string,
+  imagePath: string | null,
+}
+type likedTrailsAction = {
+  type: string,
+  data: trailData
+}
+
+const likedTrailsReducer = (likedTrails: trailData[], action: likedTrailsAction): trailData[] => {
+  switch (action.type) {
+    case 'liked': {
+      if (!likedTrails.includes(action.data)) {
+        return [...likedTrails,
+        {
+          id: action.data.id,
+          fullName: action.data.fullName,
+          description: action.data.description,
+          imagePath: action.data.imagePath,
+          directionsInfo: action.data.directionsInfo
+        }];
+      } else {
+        return likedTrails;
+      }
+    }
+    case 'unliked': {
+      return likedTrails.filter(t => t.id !== action.data.id);
+    }
+    default: {
+      throw Error('Unknown action: ' + action.type);
+    }
+  }
+}
 
 const App = () => {
 
-  const [searchTerm, setSearchTerm] = useState("")
-  const [errorMessage, setErrorMessage] = useState("");
-  const [trailsData, setTrailsData] = useState([]);
-  const [isLoading, setIsLoading] = useState(false);
+  const [searchTerm, setSearchTerm] = useState<string>("")
+  const [errorMessage, setErrorMessage] = useState<string>("");
+  const [trailsData, setTrailsData] = useState<trailData[]>([]);
+  const [isLoading, setIsLoading] = useState<boolean>(false);
+
+  const initialLikedTrails: trailData[] = [];
+  const [likedTrails, dispatch] = useReducer(likedTrailsReducer, initialLikedTrails);
 
   const API_BASE_URL = 'https://jonahtaylor-national-park-service-v1.p.rapidapi.com/parks?stateCode=OR';
   const RAPID_API_KEY = import.meta.env.VITE_RAPID_API_KEY;
@@ -24,9 +64,6 @@ const App = () => {
     }
   };
 
-  useEffect(() => {
-    fetchTrails("");
-  }, [])
 
   const fetchTrails = async (searchQuery: string) => {
     setIsLoading(true);
@@ -44,14 +81,48 @@ const App = () => {
         return;
       }
 
-      setTrailsData(responseJSON.data);
-      console.log(trailsData);
+      setTrailsData(responseJSON.data.map((datum: any) => {
+        return (
+          {
+            id: datum["id"],
+            fullName: datum["fullName"],
+            description: datum["desciption"],
+            imagePath: datum["images"] ? datum["images"][0]["url"] : null,
+            directionsInfo: datum["directionsInfo"]
+          }
+        )
+
+      }));
     } catch (error) {
       setErrorMessage('Error fetching trails. Please try again later.');
     } finally {
       setIsLoading(false);
     }
   }
+
+  useEffect(() => {
+    fetchTrails("");
+  }, [])
+
+  const handleSearchChange = (searchQuery: string) => {
+    setSearchTerm(searchQuery)
+  }
+
+  const handleCardLiked = (liked: boolean, data: trailData): void => {
+    if (liked) {
+      dispatch({
+        type: "liked",
+        data: data
+      })
+    } else {
+      dispatch({
+        type: "unliked",
+        data: data
+      })
+    }
+  }
+  console.log(likedTrails);
+
 
   return (
     <main>
@@ -62,7 +133,7 @@ const App = () => {
       </div>
       <div className='search-bar-container'>
         <br />
-        <SearchBar searchTerm={searchTerm} setSearchTerm={setSearchTerm} onSearch={fetchTrails} />
+        <SearchBar searchTerm={searchTerm} onSearchChange={handleSearchChange} onSearch={fetchTrails} />
         <br />
       </div>
 
@@ -76,15 +147,12 @@ const App = () => {
             <section>
               <ul>
                 {trailsData.map((data) => {
-                  let imagePath = data["images"] ? data["images"][0]["url"] : null;
                   return (
-                    <div className='card-container'>
-                      <Card title={data["fullName"]}>
-                        <p> {data["description"]}</p>
-                        {imagePath && <img src={imagePath} alt="" />}
-                        <p> Directions: {data["directionsInfo"]}</p>
-                      </Card>
-                    </div>
+                    <li key={data["id"]}>
+                      <div className='card-container'>
+                        <Card data={data} onLiked={handleCardLiked} />
+                      </div>
+                    </li>
                   )
                 })}
               </ul>
