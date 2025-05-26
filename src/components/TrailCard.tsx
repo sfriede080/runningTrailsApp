@@ -10,12 +10,13 @@ type trailData = {
   imagePath: string | null,
 }
 
-type CardProps = {
+type TrailCardProps = {
   data: trailData,
-  onLiked: (liked: boolean, data: trailData) => void
+  onLiked: (liked: boolean, data: trailData) => void,
+  onClicked: (cardId: string) => void
 }
 
-const Card: React.FC<CardProps> = ({ data, onLiked }) => {
+const TrailCard: React.FC<TrailCardProps> = ({ data, onLiked, onClicked }) => {
 
   const [isExpanded, setIsExpanded] = useState(false);
   const [liked, setLiked] = useState(false);
@@ -26,14 +27,21 @@ const Card: React.FC<CardProps> = ({ data, onLiked }) => {
     onLiked(newLiked, data);
   }
 
+  function handleClicked() {
+    const newIsExpanded = !isExpanded
+    if (newIsExpanded) {
+      onClicked(data.id);
+    }
+    setIsExpanded(newIsExpanded);
+  }
+
+
   useEffect(() => {
   }, [liked]); // only runs when `liked` changes
 
   return (
     <div>
-      <div className='card' onClick={() => {
-        setIsExpanded(!isExpanded);
-      }}>
+      <div className='card' onClick={handleClicked}>
         <h5>{data.fullName} <LikeButton liked={liked} onLiked={handleLiked} /> </h5>
 
         {isExpanded &&
@@ -49,4 +57,4 @@ const Card: React.FC<CardProps> = ({ data, onLiked }) => {
   )
 }
 
-export default Card
+export default TrailCard;

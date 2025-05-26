@@ -1,4 +1,3 @@
-import type { MouseEventHandler } from 'react';
 import { FaHeart } from 'react-icons/fa'
 
 type LikeButtonProps = {

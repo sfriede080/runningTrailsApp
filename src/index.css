@@ -60,7 +60,9 @@ animation: textShine 5s ease-in-out infinite alternate;
 .app-heading {
   color: white;
   font-size: 40px;
+  cursor: pointer;
 }
+
 
 .card-container {
   justify-content: center;
